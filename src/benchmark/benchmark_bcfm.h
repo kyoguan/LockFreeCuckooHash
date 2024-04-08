@@ -1,5 +1,5 @@
-#ifndef BENCHMARK_TBB
-#define BENCHMARK_TBB
+#ifndef BENCHMARK_BCFM
+#define BENCHMARK_BCFM
 
 #include <unordered_map>
 #include <iostream>
@@ -9,7 +9,7 @@
 #include <array>
 
 #include "../common/cycle_timer.h"
-#include "../tbb_hash_table.h"
+#include "../bcfm_hash_table.h"
 #include "thread_service.h"
 
 #define NUM_ITERS   3
@@ -17,10 +17,10 @@
 
 #define C_NUM_ELEMS 500
 
-class BenchmarkTBB
+class BenchmarkBCFM
 {
   public:
-    BenchmarkTBB(int op_count, int capacity, 
+    BenchmarkBCFM(int op_count, int capacity, 
                        int rweight, int idweight,
                        int thread_count,
                        double load_factor);
@@ -40,11 +40,11 @@ class BenchmarkTBB
     double m_load_factor;
 };
 
-BenchmarkTBB::BenchmarkTBB(int op_count, int capacity, 
+BenchmarkBCFM::BenchmarkBCFM(int op_count, int capacity, 
                                        int rweight, int idweight,
                                        int thread_count, double load_factor)
 {
-  std::cout << "*** BENCHMARKING TBB ***" << std::endl;
+  std::cout << "*** BENCHMARKING CONCURRENT_FLAT_MAP ***" << std::endl;
   m_op_count     = op_count;
   m_load_factor  = load_factor; 
   m_capacity     = capacity;
@@ -54,11 +54,11 @@ BenchmarkTBB::BenchmarkTBB(int op_count, int capacity,
   m_idweight     = idweight;
 }
 
-void BenchmarkTBB::benchmark_correctness()
+void BenchmarkBCFM::benchmark_correctness()
 {
   bool correct = true;
 
-  TBB_hash_table ht(2 * C_NUM_ELEMS, m_thread_count);
+  bcfm_hash_table ht(2 * C_NUM_ELEMS, m_thread_count);
   std::unordered_map<int, int> map;
   map.reserve(2 * C_NUM_ELEMS);
   
@@ -86,7 +86,7 @@ void BenchmarkTBB::benchmark_correctness()
     args[i].tid       = i;
 
     //std::cout << "creating thread " << args[i].elems << " " << args[i].start << std::endl; 
-    pthread_create(&workers[i], NULL, thread_insert<TBB_hash_table>, (void*)&args[i]);
+    pthread_create(&workers[i], NULL, thread_insert<bcfm_hash_table>, (void*)&args[i]);
   }
 
   for (int i = 0; i < 2; i++)
@@ -115,9 +115,9 @@ void BenchmarkTBB::benchmark_correctness()
     std::cout << "\t" << "Correctness test failed" << std::endl;
 }
 
-void BenchmarkTBB::benchmark_hp()
+void BenchmarkBCFM::benchmark_hp()
 {
-  TBB_hash_table ht(400000, m_thread_count);
+  bcfm_hash_table ht(400000, m_thread_count);
 
   std::random_device                 rd;
   std::mt19937                       mt(rd());
@@ -153,7 +153,7 @@ void BenchmarkTBB::benchmark_hp()
     args[i].tid       = i;
     args[i].remove    = i < (m_thread_count / 4);
 
-    pthread_create(&workers[i], NULL, thread_remove<TBB_hash_table>, (void*)&args[i]);
+    pthread_create(&workers[i], NULL, thread_remove<bcfm_hash_table>, (void*)&args[i]);
   }
   
   for (int i = 0; i < m_thread_count; i++)
@@ -165,9 +165,9 @@ void BenchmarkTBB::benchmark_hp()
 
 }
 
-void BenchmarkTBB::benchmark_all()
+void BenchmarkBCFM::benchmark_all()
 {
-    TBB_hash_table ht(m_capacity, m_thread_count);
+    bcfm_hash_table ht(m_capacity, m_thread_count);
 
     std::random_device                 rd;
     std::mt19937                       mt(rd());
@@ -208,7 +208,7 @@ void BenchmarkTBB::benchmark_all()
         args[i].dweight   = m_idweight / 2;
         args[i].ht_p      = (void*)&ht;
         args[i].tid       = i;
-        pthread_create(&workers[i], NULL, thread_service<TBB_hash_table>, (void*)&args[i]);
+        pthread_create(&workers[i], NULL, thread_service<bcfm_hash_table>, (void*)&args[i]);
       }
 
       for (int i = 0; i < m_thread_count; i++)
@@ -246,7 +246,7 @@ void BenchmarkTBB::benchmark_all()
         args[i].tid       = i;
         args[i].elems     = keys;
         args[i].start     = i * num_elems;
-        pthread_create(&workers[i], NULL, thread_service_low_contention<TBB_hash_table>, (void*)&args[i]);
+        pthread_create(&workers[i], NULL, thread_service_low_contention<bcfm_hash_table>, (void*)&args[i]);
       }
 
       for (int i = 0; i < m_thread_count; i++)
@@ -281,7 +281,7 @@ void BenchmarkTBB::benchmark_all()
         args[i].ht_p      = (void*)&ht;
         args[i].tid       = i;
         ht.insert(0, 0, 0);
-        pthread_create(&workers[i], NULL, thread_service_high_contention<TBB_hash_table>, (void*)&args[i]);
+        pthread_create(&workers[i], NULL, thread_service_high_contention<bcfm_hash_table>, (void*)&args[i]);
       }
 
       for (int i = 0; i < m_thread_count; i++)
@@ -299,7 +299,7 @@ void BenchmarkTBB::benchmark_all()
     std::cout << "\t" << "Avg Throughput (High): " << m_op_count / avg_time  / 1000.0 << " ops/ms" << std::endl;
 }
 
-void BenchmarkTBB::run()
+void BenchmarkBCFM::run()
 {
   benchmark_correctness();
   benchmark_hp();

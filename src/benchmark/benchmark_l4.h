@@ -1,5 +1,5 @@
-#ifndef BENCHMARK_TBB
-#define BENCHMARK_TBB
+#ifndef BENCHMARK_L4
+#define BENCHMARK_L4
 
 #include <unordered_map>
 #include <iostream>
@@ -7,9 +7,10 @@
 #include <algorithm>
 #include <pthread.h>
 #include <array>
+#include <unordered_map>
 
 #include "../common/cycle_timer.h"
-#include "../tbb_hash_table.h"
+#include "../l4_hash_table.h"
 #include "thread_service.h"
 
 #define NUM_ITERS   3
@@ -17,13 +18,13 @@
 
 #define C_NUM_ELEMS 500
 
-class BenchmarkTBB
+class BenchmarkL4
 {
   public:
-    BenchmarkTBB(int op_count, int capacity, 
-                       int rweight, int idweight,
-                       int thread_count,
-                       double load_factor);
+    BenchmarkL4(int op_count, int capacity, 
+                        int rweight, int idweight,
+                        int thread_count,
+                        double load_factor);
 
     void benchmark_correctness();
     void benchmark_hp();
@@ -40,11 +41,11 @@ class BenchmarkTBB
     double m_load_factor;
 };
 
-BenchmarkTBB::BenchmarkTBB(int op_count, int capacity, 
-                                       int rweight, int idweight,
-                                       int thread_count, double load_factor)
+BenchmarkL4::BenchmarkL4(int op_count, int capacity, 
+                                         int rweight, int idweight,
+                                         int thread_count, double load_factor)
 {
-  std::cout << "*** BENCHMARKING TBB ***" << std::endl;
+  std::cout << "*** BENCHMARKING L4 ***" << std::endl;
   m_op_count     = op_count;
   m_load_factor  = load_factor; 
   m_capacity     = capacity;
@@ -54,11 +55,11 @@ BenchmarkTBB::BenchmarkTBB(int op_count, int capacity,
   m_idweight     = idweight;
 }
 
-void BenchmarkTBB::benchmark_correctness()
+void BenchmarkL4::benchmark_correctness()
 {
   bool correct = true;
 
-  TBB_hash_table ht(2 * C_NUM_ELEMS, m_thread_count);
+  L4_hash_table ht(2 * C_NUM_ELEMS, m_thread_count, "L4_hash_table1");
   std::unordered_map<int, int> map;
   map.reserve(2 * C_NUM_ELEMS);
   
@@ -85,8 +86,7 @@ void BenchmarkTBB::benchmark_correctness()
     args[i].start     = i * (C_NUM_ELEMS / 2);
     args[i].tid       = i;
 
-    //std::cout << "creating thread " << args[i].elems << " " << args[i].start << std::endl; 
-    pthread_create(&workers[i], NULL, thread_insert<TBB_hash_table>, (void*)&args[i]);
+    pthread_create(&workers[i], NULL, thread_insert<L4_hash_table>, (void*)&args[i]);
   }
 
   for (int i = 0; i < 2; i++)
@@ -113,11 +113,12 @@ void BenchmarkTBB::benchmark_correctness()
     std::cout << "\t" << "Correctness test passed" << std::endl;
   else
     std::cout << "\t" << "Correctness test failed" << std::endl;
+
 }
 
-void BenchmarkTBB::benchmark_hp()
+void BenchmarkL4::benchmark_hp()
 {
-  TBB_hash_table ht(400000, m_thread_count);
+  L4_hash_table ht(400000, m_thread_count, "L4_hash_table2");
 
   std::random_device                 rd;
   std::mt19937                       mt(rd());
@@ -153,7 +154,7 @@ void BenchmarkTBB::benchmark_hp()
     args[i].tid       = i;
     args[i].remove    = i < (m_thread_count / 4);
 
-    pthread_create(&workers[i], NULL, thread_remove<TBB_hash_table>, (void*)&args[i]);
+    pthread_create(&workers[i], NULL, thread_remove<L4_hash_table>, (void*)&args[i]);
   }
   
   for (int i = 0; i < m_thread_count; i++)
@@ -165,9 +166,9 @@ void BenchmarkTBB::benchmark_hp()
 
 }
 
-void BenchmarkTBB::benchmark_all()
+void BenchmarkL4::benchmark_all()
 {
-    TBB_hash_table ht(m_capacity, m_thread_count);
+    L4_hash_table ht(m_capacity, m_thread_count, "L4_hash_table3");
 
     std::random_device                 rd;
     std::mt19937                       mt(rd());
@@ -208,7 +209,7 @@ void BenchmarkTBB::benchmark_all()
         args[i].dweight   = m_idweight / 2;
         args[i].ht_p      = (void*)&ht;
         args[i].tid       = i;
-        pthread_create(&workers[i], NULL, thread_service<TBB_hash_table>, (void*)&args[i]);
+        pthread_create(&workers[i], NULL, thread_service<L4_hash_table>, (void*)&args[i]);
       }
 
       for (int i = 0; i < m_thread_count; i++)
@@ -246,7 +247,7 @@ void BenchmarkTBB::benchmark_all()
         args[i].tid       = i;
         args[i].elems     = keys;
         args[i].start     = i * num_elems;
-        pthread_create(&workers[i], NULL, thread_service_low_contention<TBB_hash_table>, (void*)&args[i]);
+        pthread_create(&workers[i], NULL, thread_service_low_contention<L4_hash_table>, (void*)&args[i]);
       }
 
       for (int i = 0; i < m_thread_count; i++)
@@ -281,7 +282,7 @@ void BenchmarkTBB::benchmark_all()
         args[i].ht_p      = (void*)&ht;
         args[i].tid       = i;
         ht.insert(0, 0, 0);
-        pthread_create(&workers[i], NULL, thread_service_high_contention<TBB_hash_table>, (void*)&args[i]);
+        pthread_create(&workers[i], NULL, thread_service_high_contention<L4_hash_table>, (void*)&args[i]);
       }
 
       for (int i = 0; i < m_thread_count; i++)
@@ -297,9 +298,11 @@ void BenchmarkTBB::benchmark_all()
     avg_time  = std::accumulate(results.begin(), results.end(), 0.0) / static_cast<double>(results.size());
     std::cout << "\t" << "Max Throughput (High): " << m_op_count / best_time / 1000.0 << " ops/ms" << std::endl;
     std::cout << "\t" << "Avg Throughput (High): " << m_op_count / avg_time  / 1000.0 << " ops/ms" << std::endl;
+
+
 }
 
-void BenchmarkTBB::run()
+void BenchmarkL4::run()
 {
   benchmark_correctness();
   benchmark_hp();

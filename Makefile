@@ -1,6 +1,6 @@
 all:
-	g++ -pthread -Itbb-2017_U5/include -Ltbb-2017_U5/build/macos_intel64_clang_cc8.0.0_os10.11.6_release src/benchmark/main.cpp src/lockfree_hash_table.cpp -ltbb -o benchmark -std=c++11
+	g++ -pthread -ggdb -O3 -I ../L4/inc/ -I ../L4/inc/L4 src/benchmark/main.cpp src/lockfree_hash_table.cpp -L ../L4 -lL4 -ltbb -o benchmark
 debug:
-	g++ -pthread -Itbb-2017_U5/include -Ltbb-2017_U5/build/macos_intel64_clang_cc8.0.0_os10.11.6_release src/benchmark/main.cpp src/lockfree_hash_table.cpp -ltbb -o benchmark -std=c++11 -g
+	g++ -pthread -ggdb -O3 -I ../L4/inc/ -I ../L4/inc/L4 src/benchmark/main.cpp src/lockfree_hash_table.cpp -L ../L4 -lL4 -ltbb -o benchmark
 clean:
 	rm benchmark

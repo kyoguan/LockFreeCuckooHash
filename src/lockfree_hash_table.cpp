@@ -65,8 +65,8 @@ Lockfree_hash_table::~Lockfree_hash_table() {
       delete node;
   }
   
-  delete table[0];
-  delete table[1];
+  delete [] table[0];
+  delete [] table[1];
 }
 
 void rehash() {

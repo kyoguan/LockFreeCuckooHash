@@ -1,7 +1,8 @@
 #include "benchmark_unordered_map.h"
 #include "benchmark_lockfree_ht.h"
 #include "benchmark_tbb.h"
-
+#include "benchmark_l4.h"
+#include "benchmark_bcfm.h"
 #include "thread_service.h"
 #include "../common/cycle_timer.h"
 
@@ -84,5 +85,11 @@ int main(int argc, char *argv[])
 
   BenchmarkLockFreeHT benchmark_lockfree_ht(op_count, CAPACITY, rweight, idweight, num_threads, lfactor);
   benchmark_lockfree_ht.run();
+
+  BenchmarkL4 benchmark_l4(op_count, CAPACITY, rweight, idweight, num_threads, lfactor);
+  benchmark_l4.run();
+
+  BenchmarkBCFM benchmark_bcfm(op_count, CAPACITY, rweight, idweight, num_threads, lfactor);
+  benchmark_bcfm.run();
 
 }

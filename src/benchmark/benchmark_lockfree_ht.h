@@ -7,7 +7,9 @@
 #include <algorithm>
 #include <pthread.h>
 #include <array>
-#include <unordered_map>
+#include <thread>
+#include <vector>
+
 
 #include "../common/cycle_timer.h"
 #include "../lockfree_hash_table.h"
@@ -74,7 +76,7 @@ void BenchmarkLockFreeHT::benchmark_correctness()
     elems[i] = k;
     map[k] = k;
   }
-  
+
   pthread_t  workers[MAX_THREADS];
   WorkerArgs args[MAX_THREADS];
 
@@ -86,6 +88,8 @@ void BenchmarkLockFreeHT::benchmark_correctness()
     args[i].start     = i * (C_NUM_ELEMS / 2);
     args[i].tid       = i;
 
+    //std::cout << "creating thread " << args[i].elems << " " << args[i].start << " " << elems.size() << std::endl;
+    //workers[i] = std::thread(thread_insert<Lockfree_hash_table>, &args[i]);
     pthread_create(&workers[i], NULL, thread_insert<Lockfree_hash_table>, (void*)&args[i]);
   }
 
@@ -132,7 +136,8 @@ void BenchmarkLockFreeHT::benchmark_hp()
   std::default_random_engine         g;
   std::discrete_distribution<int>    drng(weights.begin(), weights.end());
 
-  int insert[200000];
+  std::vector<int> insert(200000,0);
+  //int insert[200000];
   for (int i = 0; i < 200000; i++)
   {
     int k = rng(mt);
@@ -149,7 +154,7 @@ void BenchmarkLockFreeHT::benchmark_hp()
   {
     args[i].num_elems = num_elems;
     args[i].ht_p      = (void*)&ht;
-    args[i].elems     = insert;
+    args[i].elems     = insert.data();
     args[i].start     = i * num_elems;
     args[i].tid       = i;
     args[i].remove    = i < (m_thread_count / 4);

@@ -55,6 +55,7 @@ void* thread_service(void* threadArgs)
     else
       ht_p->remove(k, tid);
   }
+  return NULL;
 }
 
 template<typename T>
@@ -104,6 +105,7 @@ void* thread_service_low_contention(void* threadArgs)
       ht_p->remove(k, tid);
     }
   }
+  return NULL;
 }
 
 template<typename T>
@@ -131,6 +133,7 @@ void* thread_service_high_contention(void* threadArgs)
   {
     ht_p->search(0, tid);
   }
+  return NULL;
 }
 
 template<typename T>
@@ -143,11 +146,13 @@ void* thread_insert(void* threadArgs)
   int  num_elems = args->num_elems;
   int  tid       = args->tid;
 
+ // std::cout << "elems: " << elems << " " << start << std::endl;
   for (int i = start; i < start + num_elems; i++)
   {
-    ht_p->insert(elems[i], elems[i], tid);
+    int kv = elems[i];
+    ht_p->insert(kv, kv, tid);
   }
-  
+  return NULL;
 }
 
 template<typename T>
@@ -172,7 +177,7 @@ void* thread_remove(void* threadArgs)
     else
       ht_p->search(elems[rng(mt)], tid);
   }
-
+  return NULL;
 }
 
 #endif
