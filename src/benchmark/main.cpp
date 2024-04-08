@@ -3,6 +3,7 @@
 #include "benchmark_tbb.h"
 #include "benchmark_l4.h"
 #include "benchmark_bcfm.h"
+#include "benchmark_cuckoo.h"
 #include "thread_service.h"
 #include "../common/cycle_timer.h"
 
@@ -92,4 +93,6 @@ int main(int argc, char *argv[])
   BenchmarkBCFM benchmark_bcfm(op_count, CAPACITY, rweight, idweight, num_threads, lfactor);
   benchmark_bcfm.run();
 
+  BenchmarkCuckoo benchmark_cuckoo(op_count, CAPACITY, rweight, idweight, num_threads, lfactor);
+  benchmark_cuckoo.run();
 }
